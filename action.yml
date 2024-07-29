@@ -71,9 +71,9 @@ runs:
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.REGION }}
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.REGION }}
 
     - name: Login to Amazon ECR 🔑
       id: login-ecr
@@ -83,7 +83,7 @@ runs:
       id: prepare-tag
       run: |
         TAG=$(echo $GITHUB_SHA)
-        CONTAINER_REPOSITORY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/${{ inputs.project-name }}"
+        CONTAINER_REPOSITORY="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ inputs.project-name }}"
         echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
         echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
         echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
@@ -102,7 +102,7 @@ runs:
           ENV_PATH=apps/${{ inputs.workspace-app }}
         fi
         ENV_FILE_PATH="./${{ inputs.project-path }}/${ENV_PATH}/.env"
-        echo ${{ secrets.ENVIROMENT }} | base64 -d > ${ENV_FILE_PATH}
+        echo ${{ env.ENVIROMENT }} | base64 -d > ${ENV_FILE_PATH}
         echo "ENV_FILE_PATH=${ENV_FILE_PATH}" >> $GITHUB_OUTPUT
 
     - name: Get current NODE_ENV
