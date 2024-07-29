@@ -86,6 +86,7 @@ runs:
 
     - name: Prepare Tags 🏷
       id: prepare-tag
+      shell: bash
       run: |
         TAG=$(echo $GITHUB_SHA)
         CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.REGION }}.amazonaws.com/${{ inputs.project-name }}"
@@ -100,6 +101,7 @@ runs:
 
     - name: Set env file 🎓
       id: set-env
+      shell: bash
       if: ${{ inputs.env-file != '' }}
       run: |
         ENV_PATH=''
@@ -112,6 +114,7 @@ runs:
 
     - name: Get current NODE_ENV
       id: get_node_env
+      shell: bash
       run: |
         NODE_ENV=`grep -oP 'NODE_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
         APP_ENV=`grep -oP 'APP_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
@@ -146,6 +149,7 @@ runs:
           WORKSPACE_APP=${{ inputs.workspace-app }}
 
     - name: Extract Bundles 📤
+      shell: bash
       if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
       run: |
         mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
@@ -160,5 +164,6 @@ runs:
         path: ${{ inputs.OUTPUT_DIST_DIR }}
 
     - name: Logout of Amazon ECR 🚪
+      shell: bash
       if: always()
       run: docker logout ${{ steps.login-ecr.outputs.registry }}
