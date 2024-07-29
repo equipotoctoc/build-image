@@ -41,6 +41,11 @@ inputs:
     required: false
     default: false
     type: boolean
+  OUTPUT_DIST_DIR:
+    description: 'output files'
+    required: false
+    default: 'out'
+    type: string
   image-env:
     description: 'Environment for the image'
     required: false
@@ -71,9 +76,9 @@ runs:
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.REGION }}
+        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.REGION }}
 
     - name: Login to Amazon ECR 🔑
       id: login-ecr
@@ -83,7 +88,7 @@ runs:
       id: prepare-tag
       run: |
         TAG=$(echo $GITHUB_SHA)
-        CONTAINER_REPOSITORY="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ inputs.project-name }}"
+        CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.REGION }}.amazonaws.com/${{ inputs.project-name }}"
         echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
         echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
         echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
@@ -102,7 +107,7 @@ runs:
           ENV_PATH=apps/${{ inputs.workspace-app }}
         fi
         ENV_FILE_PATH="./${{ inputs.project-path }}/${ENV_PATH}/.env"
-        echo ${{ env.ENVIROMENT }} | base64 -d > ${ENV_FILE_PATH}
+        echo ${{ inputs.ENVIROMENT }} | base64 -d > ${ENV_FILE_PATH}
         echo "ENV_FILE_PATH=${ENV_FILE_PATH}" >> $GITHUB_OUTPUT
 
     - name: Get current NODE_ENV
@@ -143,16 +148,16 @@ runs:
     - name: Extract Bundles 📤
       if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
       run: |
-        mkdir ${OUTPUT_DIST_DIR} ; docker cp \
+        mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
          $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
-         ${OUTPUT_DIST_DIR}
+         ${{ inputs.OUTPUT_DIST_DIR }}
 
     - name: Upload Extracted Bundles 📦
       if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
       uses: actions/upload-artifact@v4
       with:
         name: static-bundle
-        path: ${{ env.OUTPUT_DIST_DIR }}
+        path: ${{ inputs.OUTPUT_DIST_DIR }}
 
     - name: Logout of Amazon ECR 🚪
       if: always()
