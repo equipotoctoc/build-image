@@ -73,7 +73,7 @@ inputs:
     required: false
 
 runs:
-  using: 'composite'
+  #using: 'composite'
   steps:
     - name: Checkout 🛎️
       uses: actions/checkout@v3
