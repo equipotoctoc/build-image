@@ -1,148 +1,161 @@
-name: Build Docker Image 🏗
+name: 'Build Docker Image'
+description: 'Builds and pushes Docker images to Amazon ECR.'
+branding:
+  icon: 'package'
+  color: 'blue'
 
-on:
-  workflow_call:
-    inputs:
-      aws-default-region:
-        required: true
-        type: string
-      image-target:
-        required: true
-        type: string
-      project-path:
-        required: false
-        type: string
-        default: .
-      project-name:
-        required: true
-        type: string
-        description: Especifica el nombre que recibirá la imagen en docker, ej "aplicacion:latest"
-      workspace-app:
-        required: true
-        type: string
-        description: Indica la ruta del workspace de trabajo, ej. "workspaces/lib/applicationComponents"
-      docker-file:
-        required: false
-        default: dockerfile
-        type: string
-      env-file:
-        required: false
-        default: .env.development
-        type: string
-      push-image:
-        required: false
-        default: false
-        type: boolean
-      image-env:
-        required: false
-        default: 'development'
-        type: string
-    secrets:
-      AWS_ACCOUNT_ID:
-        required: true
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      REGION:
-        required: true
-      ENVIROMENT:
-        required: false
+inputs:
+  aws-default-region:
+    description: 'AWS default region'
+    required: true
+    type: string
+  image-target:
+    description: 'Docker image target'
+    required: true
+    type: string
+  project-path:
+    description: 'Project path'
+    required: false
+    default: '.'
+    type: string
+  project-name:
+    description: 'Project name for the Docker image'
+    required: true
+    type: string
+  workspace-app:
+    description: 'Workspace app path'
+    required: true
+    type: string
+  docker-file:
+    description: 'Path to Dockerfile'
+    required: false
+    default: 'dockerfile'
+    type: string
+  env-file:
+    description: 'Path to environment file'
+    required: false
+    default: '.env.development'
+    type: string
+  push-image:
+    description: 'Whether to push the image to ECR'
+    required: false
+    default: false
+    type: boolean
+  image-env:
+    description: 'Environment for the image'
+    required: false
+    default: 'development'
+    type: string
 
-jobs:
-  build-and-push:
-    name: Build and run target 🧱 🧪
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v3
+secrets:
+  AWS_ACCOUNT_ID:
+    description: 'AWS Account ID'
+    required: true
+  AWS_ACCESS_KEY_ID:
+    description: 'AWS Access Key ID'
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    description: 'AWS Secret Access Key'
+    required: true
+  REGION:
+    description: 'AWS Region'
+    required: true
+  ENVIROMENT:
+    description: 'Environment variable'
+    required: false
 
-      - name: Configure AWS credentials 🏁
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.REGION }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout 🛎️
+      uses: actions/checkout@v3
 
-      - name: Login to Amazon ECR 🔑
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+    - name: Configure AWS credentials 🏁
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.REGION }}
 
-      - name: Prepare Tags 🏷
-        id: prepare-tag
-        run: |
-          TAG=$(echo $GITHUB_SHA)
-          CONTAINER_REPOSITORY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/${{ inputs.project-name }}"
-          echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
-          echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
-          echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
-          echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${TAG}" >> $GITHUB_OUTPUT
+    - name: Login to Amazon ECR 🔑
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Set up Docker Buildx 🐳
-        id: buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Prepare Tags 🏷
+      id: prepare-tag
+      run: |
+        TAG=$(echo $GITHUB_SHA)
+        CONTAINER_REPOSITORY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/${{ inputs.project-name }}"
+        echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
+        echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
+        echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
+        echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${TAG}" >> $GITHUB_OUTPUT
 
-      - name: Set env file 🎓
-        id: set-env
-        if: ${{ inputs.env-file != '' }}
-        run: |
-          ENV_PATH=''
-          if [ "${{ inputs.workspace-app }}" != '' ]; then
-            ENV_PATH=apps/${{ inputs.workspace-app }}
-          fi
-          ENV_FILE_PATH="./${{ inputs.project-path }}/${ENV_PATH}/.env"
-          echo ${{ secrets.ENVIROMENT }} | base64 -d > ${ENV_FILE_PATH}
-          echo "ENV_FILE_PATH=${ENV_FILE_PATH}" >> $GITHUB_OUTPUT
+    - name: Set up Docker Buildx 🐳
+      id: buildx
+      uses: docker/setup-buildx-action@v2
 
-      - name: Get current NODE_ENV
-        id: get_node_env
-        run: |
-          NODE_ENV=`grep -oP 'NODE_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
-          APP_ENV=`grep -oP 'APP_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
-          if [ "${{ inputs.image-env }}" = 'TEST' ] || [ "${{ inputs.image-env }}" = 'test' ]; then
-            NODE_ENV="test"
-            APP_ENV="test"
-          elif [ "$NODE_ENV" = '' ] ; then
-            NODE_ENV="production"
-            APP_ENV="production"
-          fi
-          echo "node_env=${NODE_ENV}" >> $GITHUB_OUTPUT
-          echo "app_env=${APP_ENV}" >> $GITHUB_OUTPUT
+    - name: Set env file 🎓
+      id: set-env
+      if: ${{ inputs.env-file != '' }}
+      run: |
+        ENV_PATH=''
+        if [ "${{ inputs.workspace-app }}" != '' ]; then
+          ENV_PATH=apps/${{ inputs.workspace-app }}
+        fi
+        ENV_FILE_PATH="./${{ inputs.project-path }}/${ENV_PATH}/.env"
+        echo ${{ secrets.ENVIROMENT }} | base64 -d > ${ENV_FILE_PATH}
+        echo "ENV_FILE_PATH=${ENV_FILE_PATH}" >> $GITHUB_OUTPUT
 
-      - name: Build and run target 🐙
-        uses: docker/build-push-action@v3
-        with:
-          context: ./${{ inputs.project-path }}
-          push: ${{ inputs.push-image }}
-          builder: ${{ steps.buildx.outputs.name }}
-          file: ./${{ inputs.project-path }}/${{ inputs.docker-file }}
-          target: ${{ inputs.image-target }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: |
-            ${{ steps.prepare-tag.outputs.IMAGE_CURRENT }}
-            ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}
-          secret-files: |
-            env=${{ steps.set-env.outputs.ENV_FILE_PATH }}
-          build-args: |
-            NODE_ENV=${{ steps.get_node_env.outputs.node_env }}
-            APP_ENV=${{ steps.get_node_env.outputs.app_env }}
-            WORKSPACE_APP=${{ inputs.workspace-app }}
+    - name: Get current NODE_ENV
+      id: get_node_env
+      run: |
+        NODE_ENV=`grep -oP 'NODE_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
+        APP_ENV=`grep -oP 'APP_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
+        if [ "${{ inputs.image-env }}" = 'TEST' ] || [ "${{ inputs.image-env }}" = 'test' ]; then
+          NODE_ENV="test"
+          APP_ENV="test"
+        elif [ "$NODE_ENV" = '' ] ; then
+          NODE_ENV="production"
+          APP_ENV="production"
+        fi
+        echo "node_env=${NODE_ENV}" >> $GITHUB_OUTPUT
+        echo "app_env=${APP_ENV}" >> $GITHUB_OUTPUT
 
-      - name: Extract Bundles 📤
-        if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
-        run: |
-          mkdir ${OUTPUT_DIST_DIR} ; docker cp \
-           $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
-           ${OUTPUT_DIST_DIR}
+    - name: Build and run target 🐙
+      uses: docker/build-push-action@v3
+      with:
+        context: ./${{ inputs.project-path }}
+        push: ${{ inputs.push-image }}
+        builder: ${{ steps.buildx.outputs.name }}
+        file: ./${{ inputs.project-path }}/${{ inputs.docker-file }}
+        target: ${{ inputs.image-target }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        tags: |
+          ${{ steps.prepare-tag.outputs.IMAGE_CURRENT }}
+          ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}
+        secret-files: |
+          env=${{ steps.set-env.outputs.ENV_FILE_PATH }}
+        build-args: |
+          NODE_ENV=${{ steps.get_node_env.outputs.node_env }}
+          APP_ENV=${{ steps.get_node_env.outputs.app_env }}
+          WORKSPACE_APP=${{ inputs.workspace-app }}
 
-      - name: Upload Extracted Bundles 📦
-        if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: static-bundle
-          path: ${{ env.OUTPUT_DIST_DIR }}
+    - name: Extract Bundles 📤
+      if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
+      run: |
+        mkdir ${OUTPUT_DIST_DIR} ; docker cp \
+         $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
+         ${OUTPUT_DIST_DIR}
 
-      - name: Logout of Amazon ECR 🚪
-        if: always()
-        run: docker logout ${{ steps.login-ecr.outputs.registry }}
+    - name: Upload Extracted Bundles 📦
+      if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: static-bundle
+        path: ${{ env.OUTPUT_DIST_DIR }}
+
+    - name: Logout of Amazon ECR 🚪
+      if: always()
+      run: docker logout ${{ steps.login-ecr.outputs.registry }}
