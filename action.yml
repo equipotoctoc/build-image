@@ -46,6 +46,8 @@ inputs:
     required: false
     default: 'development'
     type: string
+
+secrets:
   AWS_ACCOUNT_ID:
     description: 'AWS Account ID'
     required: true
