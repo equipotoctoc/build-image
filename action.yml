@@ -5,7 +5,7 @@ branding:
   color: 'blue'
 
 inputs:
-  aws-default-region:
+  domain:
     description: 'Domain for docs'
     default: ''
     required: false
