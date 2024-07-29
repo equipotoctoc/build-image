@@ -135,7 +135,7 @@ runs:
 
     - name: Docs change domain TOCTOC
       shell: bash
-      if: ${{ !endsWith(inputs.project-name, '-docs') }}
+      if: ${{ endsWith(inputs.project-name, '-docs') }}
       run: |
         sed -i "s|localhost|${{ inputs.domain }}|g" ./${{ inputs.project-path }}/public/index.html
 
