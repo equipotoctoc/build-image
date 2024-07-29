@@ -73,7 +73,7 @@ inputs:
     required: false
 
 runs:
-  #using: 'composite'
+  using: 'composite'
   steps:
     - name: Checkout 🛎️
       uses: actions/checkout@v3
@@ -137,7 +137,6 @@ runs:
       shell: bash
       if: ${{ !endsWith(inputs.project-name, '-docs') }}
       run: |
-        echo ${{ steps.tag_version.outputs.new_tag }}
         sed -i "s|localhost|${{ inputs.domain }}|g" ./${{ inputs.project-path }}/public/index.html
 
     - name: Build and run target 🐙
