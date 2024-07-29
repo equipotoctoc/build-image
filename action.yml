@@ -137,7 +137,7 @@ runs:
       shell: bash
       if: ${{ endsWith(inputs.project-name, '-docs') }}
       run: |
-        sed -i "s|localhost[0-9]*|${{ inputs.domain }}|g" ./apps/${{ inputs.workspace-app }}/public/index.html
+        sed -i "s|http://localhost[0-9]*|https://${{ inputs.domain }}|g" ./apps/${{ inputs.workspace-app }}/public/index.html
 
     - name: Build and run target 🐙
       uses: docker/build-push-action@v3
