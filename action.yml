@@ -6,6 +6,11 @@ branding:
 
 inputs:
   aws-default-region:
+    description: 'Domain for docs'
+    default: ''
+    required: false
+    type: string
+  aws-default-region:
     description: 'AWS default region'
     required: true
     type: string
@@ -128,6 +133,13 @@ runs:
         echo "node_env=${NODE_ENV}" >> $GITHUB_OUTPUT
         echo "app_env=${APP_ENV}" >> $GITHUB_OUTPUT
 
+    - name: Docs change domain TOCTOC
+      shell: bash
+      if: ${{ !endsWith(inputs.project-name, '-docs') }}
+      run: |
+        echo ${{ steps.tag_version.outputs.new_tag }}
+        sed -i "s|localhost|${{ inputs.domain }}|g" ./${{ inputs.project-path }}/public/index.html
+
     - name: Build and run target 🐙
       uses: docker/build-push-action@v3
       with:
@@ -148,20 +160,20 @@ runs:
           APP_ENV=${{ steps.get_node_env.outputs.app_env }}
           WORKSPACE_APP=${{ inputs.workspace-app }}
 
-    - name: Extract Bundles 📤
-      shell: bash
-      if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
-      run: |
-        mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
-         $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
-         ${{ inputs.OUTPUT_DIST_DIR }}
+    # - name: Extract Bundles 📤
+    #   shell: bash
+    #   if: ${{ (!endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
+    #   run: |
+    #     mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
+    #      $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
+    #      ${{ inputs.OUTPUT_DIST_DIR }}
 
-    - name: Upload Extracted Bundles 📦
-      if: ${{ (!endsWith(inputs.project-name, '-router') || !endsWith(inputs.project-name, '-entorno') || !endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: static-bundle
-        path: ${{ inputs.OUTPUT_DIST_DIR }}
+    # - name: Upload Extracted Bundles 📦
+    #   if: ${{ (!endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: static-bundle
+    #     path: ${{ inputs.OUTPUT_DIST_DIR }}
 
     - name: Logout of Amazon ECR 🚪
       shell: bash
