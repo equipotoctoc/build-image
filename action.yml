@@ -74,9 +74,6 @@ inputs:
   VERSION:
     description: 'Version variable'
     required: true
-  GITHUB_TOKEN:
-    description: 'Github token for tag and realease'
-    required: true
 
 runs:
   using: 'composite'
