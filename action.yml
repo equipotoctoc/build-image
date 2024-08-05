@@ -73,7 +73,10 @@ inputs:
     required: false
   VERSION:
     description: 'Version variable'
-    required: false
+    required: true
+  GITHUB_TOKEN:
+    description: 'Github token for tag and realease'
+    required: true
 
 runs:
   using: 'composite'
@@ -136,6 +139,16 @@ runs:
         echo "node_env=${NODE_ENV}" >> $GITHUB_OUTPUT
         echo "app_env=${APP_ENV}" >> $GITHUB_OUTPUT
 
+    - name: Update package.json version
+      shell: bash
+      run: |
+        PACKAGE_JSON_PATH="./apps/${{ inputs.workspace-app }}/package.json"
+        if [ -f $PACKAGE_JSON_PATH ]; then
+          echo "Updating $PACKAGE_JSON_PATH with version ${{ inputs.VERSION }}"
+          jq '.version = "${{ inputs.VERSION }}"' $PACKAGE_JSON_PATH > tmp.$$.json && mv tmp.$$.json $PACKAGE_JSON_PATH
+          cat $PACKAGE_JSON_PATH
+        fi
+
     - name: Docs change domain TOCTOC
       shell: bash
       if: ${{ endsWith(inputs.project-name, '-docs') }}
@@ -176,6 +189,17 @@ runs:
     #   with:
     #     name: static-bundle
     #     path: ${{ inputs.OUTPUT_DIST_DIR }}
+
+    - name: Create tag and release
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git tag -a "v${{ inputs.VERSION }}" -m "Release version ${{ inputs.VERSION }}"
+        git push origin "v${{ inputs.VERSION }}"
+        gh release create "v${{ inputs.VERSION }}" --title "v${{ inputs.VERSION }}" --notes "Release version ${{ inputs.VERSION }}"
 
     - name: Logout of Amazon ECR 🚪
       shell: bash
