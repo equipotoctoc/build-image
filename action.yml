@@ -142,7 +142,7 @@ runs:
         PACKAGE_JSON_PATH="./apps/${{ inputs.workspace-app }}/package.json"
         if [ -f $PACKAGE_JSON_PATH ]; then
           echo "Updating $PACKAGE_JSON_PATH with version ${{ inputs.VERSION }}"
-          jq '.version = "${{ inputs.VERSION }}"' $PACKAGE_JSON_PATH > tmp.$$.json && mv tmp.$$.json $PACKAGE_JSON_PATH
+          jq --arg new_version "${{ inputs.VERSION }}" '.version = $new_version' $PACKAGE_JSON_PATH > tmp.$$.json && mv tmp.$$.json $PACKAGE_JSON_PATH
           cat $PACKAGE_JSON_PATH
         fi
 
