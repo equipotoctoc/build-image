@@ -71,6 +71,9 @@ inputs:
   ENVIROMENT:
     description: 'Environment variable'
     required: false
+  VERSION:
+    description: 'Version variable'
+    required: false
 
 runs:
   using: 'composite'
