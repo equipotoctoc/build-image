@@ -74,6 +74,9 @@ inputs:
   VERSION:
     description: 'Version variable'
     required: true
+  TOKEN:
+    description: 'Github token'
+    required: true
 
 runs:
   using: 'composite'
@@ -82,7 +85,7 @@ runs:
       id: latest
       uses: thebritican/fetch-latest-release@v1.0.3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ inputs.GITHUB_TOKEN }}
 
     - name: Checkout 🛎️
       uses: actions/checkout@master
