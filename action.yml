@@ -85,7 +85,7 @@ runs:
       id: latest
       uses: thebritican/fetch-latest-release@v1.0.3
       with:
-        github_token: ${{ inputs.GITHUB_TOKEN }}
+        github_token: ${{ inputs.TOKEN }}
 
     - name: Checkout 🛎️
       uses: actions/checkout@master
