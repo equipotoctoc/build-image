@@ -116,8 +116,8 @@ runs:
         CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
         echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
         echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
-        echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
-        echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${TAG}" >> $GITHUB_OUTPUT
+        echo "IMAGE_CURRENT=${{ steps.latest.outputs.tag_name }}_${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
+        echo "IMAGE_CURRENT_COMMIT=${{ steps.latest.outputs.tag_name }}_${CONTAINER_REPOSITORY}:${TAG}" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx 🐳
       id: buildx
