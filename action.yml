@@ -83,9 +83,10 @@ runs:
   steps:
     - name: Get latest release
       id: latest
-      uses: thebritican/fetch-latest-release@v1.0.3
+      uses: InsonusK/get-latest-release@v1.0.1
       with:
-        github_token: ${{ inputs.TOKEN }}
+        myToken: ${{ inputs.TOKEN }}
+        exclude_types: 'draft'
 
     - name: Checkout 🛎️
       uses: actions/checkout@master
