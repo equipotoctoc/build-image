@@ -73,7 +73,7 @@ inputs:
     required: true
   TOKEN:
     description: 'Github token'
-    required: true
+    required: false
 
 runs:
   using: 'composite'
@@ -81,21 +81,15 @@ runs:
     - name: Get latest release
       id: latest
       uses: InsonusK/get-latest-release@v1.0.1
+      if: ${{ inputs.TOKEN != '' && inputs.TOKEN != null }}
       with:
         myToken: ${{ inputs.TOKEN }}
         exclude_types: 'draft'
 
-    - name: Verify outputs
-      shell: bash
-      run: |
-        echo "ENVIROMENT=${{ inputs.ENVIROMENT }}"
-        echo "aws-default-region=${{ inputs.aws-default-region }}"
-        echo "tag_name=${{ steps.latest.outputs.tag_name }}"
-
     - name: Checkout 🛎️
       uses: actions/checkout@master
       with:
-        ref: ${{ steps.latest.outputs.tag_name }}
+        ref: ${{ inputs.token && steps.latest.outputs.tag_name || 'master' }}
 
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
