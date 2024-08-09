@@ -88,8 +88,13 @@ runs:
 
     - name: Checkout 🛎️
       uses: actions/checkout@master
+      if: ${{ inputs.TOKEN != '' && inputs.TOKEN != null }}
       with:
-        ref: ${{ inputs.TOKEN && steps.latest.outputs.tag_name || 'master' }}
+        ref: ${{ steps.latest.outputs.tag_name }}
+
+    - name: Checkout 🛎️
+      uses: actions/checkout@master
+      if: ${{ inputs.TOKEN == '' || inputs.TOKEN == null }}
 
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
