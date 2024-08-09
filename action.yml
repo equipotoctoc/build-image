@@ -89,7 +89,7 @@ runs:
     - name: Checkout 🛎️
       uses: actions/checkout@master
       with:
-        ref: ${{ inputs.token && steps.latest.outputs.tag_name || 'master' }}
+        ref: ${{ inputs.TOKEN && steps.latest.outputs.tag_name || 'master' }}
 
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
