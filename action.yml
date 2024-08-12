@@ -58,13 +58,13 @@ inputs:
     type: string
   AWS_ACCOUNT_ID:
     description: 'AWS Account ID'
-    required: false
+    required: true
   AWS_ACCESS_KEY_ID:
     description: 'AWS Access Key ID'
-    required: false
+    required: true
   AWS_SECRET_ACCESS_KEY:
     description: 'AWS Secret Access Key'
-    required: false
+    required: true
   ENVIROMENT:
     description: 'Environment variable'
     required: false
@@ -97,7 +97,6 @@ runs:
       if: ${{ inputs.TOKEN == '' || inputs.TOKEN == null }}
 
     - name: Configure AWS credentials 🏁
-      if: ${{ inputs.push-image == true }}
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
         aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
@@ -207,5 +206,5 @@ runs:
 
     - name: Logout of Amazon ECR 🚪
       shell: bash
-      if: ${{ inputs.push-image == true }}
+      if: always()
       run: docker logout ${{ steps.login-ecr.outputs.registry }}
