@@ -97,6 +97,7 @@ runs:
       if: ${{ inputs.TOKEN == '' || inputs.TOKEN == null }}
 
     - name: Configure AWS credentials 🏁
+      if: ${{ inputs.push-image == true }}
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
         aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
