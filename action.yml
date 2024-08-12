@@ -58,19 +58,19 @@ inputs:
     type: string
   AWS_ACCOUNT_ID:
     description: 'AWS Account ID'
-    required: true
+    required: false
   AWS_ACCESS_KEY_ID:
     description: 'AWS Access Key ID'
-    required: true
+    required: false
   AWS_SECRET_ACCESS_KEY:
     description: 'AWS Secret Access Key'
-    required: true
+    required: false
   ENVIROMENT:
     description: 'Environment variable'
     required: false
   VERSION:
     description: 'Version variable'
-    required: true
+    required: false
   TOKEN:
     description: 'Github token'
     required: false
@@ -105,6 +105,7 @@ runs:
         aws-region: ${{ inputs.aws-default-region }}
 
     - name: Login to Amazon ECR 🔑
+      if: ${{ inputs.push-image == true }}
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
@@ -153,6 +154,7 @@ runs:
         echo "app_env=${APP_ENV}" >> $GITHUB_OUTPUT
 
     - name: Update package.json version
+      if: ${{ inputs.VERSION != ''}}
       shell: bash
       run: |
         PACKAGE_JSON_PATH="./apps/${{ inputs.workspace-app }}/package.json"
@@ -205,5 +207,5 @@ runs:
 
     - name: Logout of Amazon ECR 🚪
       shell: bash
-      if: always()
+      if: ${{ inputs.push-image == true }}
       run: docker logout ${{ steps.login-ecr.outputs.registry }}
