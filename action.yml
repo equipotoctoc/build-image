@@ -78,19 +78,11 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Get latest release
-      id: latest
-      uses: InsonusK/get-latest-release@v1.0.1
-      if: ${{ inputs.TOKEN != '' && inputs.TOKEN != null }}
-      with:
-        myToken: ${{ inputs.TOKEN }}
-        exclude_types: 'draft'
-
     - name: Checkout 🛎️
       uses: actions/checkout@master
-      if: ${{ inputs.TOKEN != '' && inputs.TOKEN != null }}
+      if: ${{ inputs.TOKEN != '' && inputs.TOKEN != null && inputs.VERSION != '' && inputs.VERSION != null }}
       with:
-        ref: ${{ steps.latest.outputs.tag_name }}
+        ref: ${{ inputs.VERSION }}
 
     - name: Checkout 🛎️
       uses: actions/checkout@master
@@ -115,7 +107,7 @@ runs:
         TAG=$(echo $GITHUB_SHA)
         CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
         if [ -n "${{ inputs.TOKEN }}" ]; then
-          IMAGE_TAG="${{ steps.latest.outputs.tag_name }}_"
+          IMAGE_TAG="${{ inputs.VERSION }}_"
         else
           IMAGE_TAG=""
         fi
