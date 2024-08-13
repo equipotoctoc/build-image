@@ -110,27 +110,19 @@ runs:
 
     - name: Prepare Tags 🏷
       id: prepare-tag
-      if: ${{ inputs.TOKEN != '' || inputs.TOKEN != null }}
       shell: bash
       run: |
         TAG=$(echo $GITHUB_SHA)
         CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
+        if [ -n "${{ inputs.TOKEN }}" ]; then
+          IMAGE_TAG="${{ steps.latest.outputs.tag_name }}_"
+        else
+          IMAGE_TAG=""
+        fi
         echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
         echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
-        echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ steps.latest.outputs.tag_name }}_${{ inputs.image-env }}" >> $GITHUB_OUTPUT
-        echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${{ steps.latest.outputs.tag_name }}_${TAG}" >> $GITHUB_OUTPUT
-
-    - name: Prepare Tags 🏷
-      id: prepare-tag
-      if: ${{ inputs.TOKEN == '' || inputs.TOKEN == null }}
-      shell: bash
-      run: |
-        TAG=$(echo $GITHUB_SHA)
-        CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
-        echo "CONTAINER_IMAGE=${{ inputs.project-name }}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
-        echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
-        echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
-        echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${TAG}" >> $GITHUB_OUTPUT
+        echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${IMAGE_TAG}${{ inputs.image-env }}" >> $GITHUB_OUTPUT
+        echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${IMAGE_TAG}${TAG}" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx 🐳
       id: buildx
