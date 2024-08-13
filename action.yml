@@ -71,22 +71,19 @@ inputs:
   VERSION:
     description: 'Version variable'
     required: false
-  TOKEN:
-    description: 'Github token'
-    required: false
 
 runs:
   using: 'composite'
   steps:
     - name: Checkout 🛎️
       uses: actions/checkout@master
-      if: ${{ inputs.TOKEN != '' && inputs.TOKEN != null && inputs.VERSION != '' && inputs.VERSION != null }}
+      if: ${{ inputs.VERSION != '' && inputs.VERSION != null }}
       with:
         ref: ${{ inputs.VERSION }}
 
     - name: Checkout 🛎️
       uses: actions/checkout@master
-      if: ${{ inputs.TOKEN == '' || inputs.TOKEN == null }}
+      if: ${{ inputs.VERSION == '' || inputs.VERSION == null }}
 
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
@@ -106,7 +103,7 @@ runs:
       run: |
         TAG=$(echo $GITHUB_SHA)
         CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
-        if [ -n "${{ inputs.TOKEN }}" ]; then
+        if [ -n "${{ inputs.VERSION }}" ]; then
           IMAGE_TAG="${{ inputs.VERSION }}_"
         else
           IMAGE_TAG=""
