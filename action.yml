@@ -157,11 +157,11 @@ runs:
           cat $PACKAGE_JSON_PATH
         fi
 
-    - name: Docs change domain TOCTOC
-      shell: bash
-      if: ${{ endsWith(inputs.project-name, '-docs') }}
-      run: |
-        sed -i "s|http://localhost:[0-9]*|https://${{ inputs.domain }}|g" ./apps/${{ inputs.workspace-app }}/public/index.html
+    # - name: Docs change domain TOCTOC
+    #   shell: bash
+    #   if: ${{ endsWith(inputs.project-name, '-docs') }}
+    #   run: |
+    #     sed -i "s|http://localhost:[0-9]*|https://${{ inputs.domain }}|g" ./apps/${{ inputs.workspace-app }}/public/index.html
 
     - name: Build and run target 🐙
       uses: docker/build-push-action@v3
