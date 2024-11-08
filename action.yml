@@ -71,19 +71,31 @@ inputs:
   VERSION:
     description: 'Version variable'
     required: false
+  build-context:
+    description: 'Build context: test, development, or production'
+    required: true
+    type: string
 
 runs:
   using: 'composite'
   steps:
     - name: Checkout 🛎️
-      uses: actions/checkout@master
-      if: ${{ inputs.VERSION != '' && inputs.VERSION != null }}
+      uses: actions/checkout@v2
       with:
-        ref: ${{ inputs.VERSION }}
+        ref: |
+          ${{ inputs.build-context == 'test' && github.head_ref || 
+              (inputs.build-context == 'production' && inputs.VERSION != '' && inputs.VERSION != null) && inputs.VERSION || 
+              'main' }}
 
-    - name: Checkout 🛎️
-      uses: actions/checkout@master
-      if: ${{ inputs.VERSION == '' || inputs.VERSION == null }}
+    # - name: Checkout 🛎️
+    #   uses: actions/checkout@master
+    #   if: ${{ inputs.VERSION != '' && inputs.VERSION != null }}
+    #   with:
+    #     ref: ${{ inputs.VERSION }}
+
+    # - name: Checkout 🛎️
+    #   uses: actions/checkout@master
+    #   if: ${{ inputs.VERSION == '' || inputs.VERSION == null }}
 
     - name: Configure AWS credentials 🏁
       uses: aws-actions/configure-aws-credentials@v1-node16
