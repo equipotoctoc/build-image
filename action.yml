@@ -51,6 +51,16 @@ inputs:
     required: false
     default: 'out'
     type: string
+  NEXT_STATIC_PATH:
+    description: 'next js static path'
+    required: false
+    default: 'next/static'
+    type: boolean
+  UPLOAD_FILES:
+    description: 'Defines if output files will be uploaded to s3'
+    required: false
+    default: false
+    type: boolean
   image-env:
     description: 'Environment for the image'
     required: false
@@ -195,20 +205,20 @@ runs:
           APP_ENV=${{ steps.get_node_env.outputs.app_env }}
           WORKSPACE_APP=${{ inputs.workspace-app }}
 
-    # - name: Extract Bundles 📤
-    #   shell: bash
-    #   if: ${{ (!endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
-    #   run: |
-    #     mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
-    #      $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
-    #      ${{ inputs.OUTPUT_DIST_DIR }}
+    - name: Extract Bundles 📤
+      shell: bash
+      if: ${{ inputs.UPLOAD_FILES == true && inputs.OUTPUT_DIST_DIR != '' && inputs.NEXT_STATIC_PATH != '' }}
+      run: |
+        mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
+         $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
+         ${{ inputs.OUTPUT_DIST_DIR }}
 
-    # - name: Upload Extracted Bundles 📦
-    #   if: ${{ (!endsWith(inputs.project-name, '-docs')) && (inputs.image-env == 'prod' || inputs.image-env == 'staging') }}
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: static-bundle
-    #     path: ${{ inputs.OUTPUT_DIST_DIR }}
+    - name: Upload Extracted Bundles 📦
+      if: ${{ inputs.UPLOAD_FILES == true && inputs.OUTPUT_DIST_DIR != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: static-bundle
+        path: ${{ inputs.OUTPUT_DIST_DIR }}
 
     - name: Logout of Amazon ECR 🚪
       shell: bash
