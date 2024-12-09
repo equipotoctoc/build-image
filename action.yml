@@ -212,14 +212,14 @@ runs:
 
     - name: Extract Bundles 📤
       shell: bash
-      if: ${{ inputs.UPLOAD_FILES == true && inputs.OUTPUT_DIST_DIR != '' && inputs.NEXT_STATIC_PATH != '' }}
+      if: ${{ inputs.UPLOAD_FILES == 'true' && inputs.OUTPUT_DIST_DIR != '' && inputs.NEXT_STATIC_PATH != '' }}
       run: |
         mkdir ${{ inputs.OUTPUT_DIST_DIR }} ; docker cp \
          $(docker create --rm ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}):/app/apps/frontend/.$NEXT_STATIC_PATH/ \
          ${{ inputs.OUTPUT_DIST_DIR }}
 
     - name: Upload Extracted Bundles 📦
-      if: ${{ inputs.UPLOAD_FILES == true && inputs.OUTPUT_DIST_DIR != '' }}
+      if: ${{ inputs.UPLOAD_FILES == 'true' && inputs.OUTPUT_DIST_DIR != '' }}
       uses: actions/upload-artifact@v4
       with:
         name: static-bundle
