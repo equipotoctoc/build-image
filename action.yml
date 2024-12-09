@@ -85,6 +85,11 @@ inputs:
     description: 'Build context: test, development, or production'
     required: true
     type: string
+  branch:
+    description: 'branch to checkout'
+    required: false
+    default: 'main'
+    type: string
 
 runs:
   using: 'composite'
@@ -95,7 +100,7 @@ runs:
         ref: |
           ${{ inputs.build-context == 'test' && github.head_ref || 
               (inputs.build-context == 'production' && inputs.VERSION != '' && inputs.VERSION != null) && inputs.VERSION || 
-              'main' }}
+              inputs.branch }}
 
     # - name: Checkout 🛎️
     #   uses: actions/checkout@master
