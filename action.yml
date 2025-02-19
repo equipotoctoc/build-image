@@ -90,6 +90,10 @@ inputs:
     required: false
     default: 'main'
     type: string
+  aws-namespace:
+    description: 'AWS ECR namespace'
+    required: false
+    type: string
 
 runs:
   using: 'composite'
@@ -129,7 +133,11 @@ runs:
       shell: bash
       run: |
         TAG=$(echo $GITHUB_SHA)
-        CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
+        if [ -n "${{ inputs.aws-namespace }}" ]; then
+          CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.aws-namespace }}/${{ inputs.project-name }}"
+        else
+          CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
+        fi
         if [ -n "${{ inputs.VERSION }}" ]; then
           IMAGE_TAG="${{ inputs.VERSION }}_"
         else
