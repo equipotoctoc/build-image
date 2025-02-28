@@ -105,6 +105,7 @@ runs:
           ${{ inputs.build-context == 'test' && github.head_ref || 
               (inputs.build-context == 'production' && inputs.VERSION != '' && inputs.VERSION != null) && inputs.VERSION || 
               inputs.branch }}
+        fetch-depth: 0
 
     # - name: Checkout 🛎️
     #   uses: actions/checkout@master
