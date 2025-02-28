@@ -156,7 +156,7 @@ runs:
     - name: Set env file 🎓
       id: set-env
       shell: bash
-      if: ${{ inputs.env-file != '' }}
+      if: ${{ inputs.env-file != '' && inputs.ENVIROMENT != '' }}
       run: |
         ENV_PATH=''
         if [ "${{ inputs.workspace-app }}" != '' ]; then
@@ -169,6 +169,7 @@ runs:
     - name: Get current NODE_ENV
       id: get_node_env
       shell: bash
+      if: ${{ inputs.ENVIROMENT != '' }}
       run: |
         NODE_ENV=`grep -oP 'NODE_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
         APP_ENV=`grep -oP 'APP_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
