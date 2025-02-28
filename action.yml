@@ -200,6 +200,19 @@ runs:
     #   run: |
     #     sed -i "s|http://localhost:[0-9]*|https://${{ inputs.domain }}|g" ./apps/${{ inputs.workspace-app }}/public/index.html
 
+    - name: Check Dockerfile location 🔍
+      shell: bash
+      run: |
+        echo "Checking contents of project path: ./${{ inputs.project-path }}"
+        ls -la ./${{ inputs.project-path }}
+        echo "Looking for Dockerfile at: ./${{ inputs.project-path }}/${{ inputs.docker-file }}"
+        if [ -f "./${{ inputs.project-path }}/${{ inputs.docker-file }}" ]; then
+          echo "✅ Dockerfile found"
+        else
+          echo "❌ Dockerfile not found"
+          exit 1
+        fi
+
     - name: Build and run target 🐙
       uses: docker/build-push-action@v3
       with:
