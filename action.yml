@@ -98,7 +98,6 @@ inputs:
     description: 'Platforms to build for (e.g., linux/amd64,linux/arm64)'
     required: false
     type: string
-    default: 'linux/amd64'
 
 runs:
   using: 'composite'
@@ -228,7 +227,7 @@ runs:
         target: ${{ inputs.image-target }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        platforms: ${{ inputs.platforms }}
+        platforms: ${{ inputs.platforms != '' && inputs.platforms || 'linux/amd64' }}
         tags: |
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT }}
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}
