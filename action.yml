@@ -225,8 +225,12 @@ runs:
         builder: ${{ steps.buildx.outputs.name }}
         file: ./${{ inputs.project-path }}/${{ inputs.docker-file }}
         target: ${{ inputs.image-target }}
-        cache-from: type=gha,scope=${{ inputs.project-name }}-${{ inputs.workspace-app }}-${{ inputs.build-context }}
-        cache-to: type=gha,mode=max,scope=${{ inputs.project-name }}-${{ inputs.workspace-app }}-${{ inputs.build-context }}
+        cache-from: |
+          type=gha,scope=${{ inputs.project-name }}-deps
+          type=gha,scope=${{ inputs.project-name }}-build
+        cache-to: |
+          type=gha,mode=max,scope=${{ inputs.project-name }}-deps
+          type=gha,mode=max,scope=${{ inputs.project-name }}-build
         platforms: ${{ inputs.platforms != '' && inputs.platforms || 'linux/amd64' }}
         tags: |
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT }}
