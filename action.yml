@@ -222,6 +222,12 @@ runs:
           exit 1
         fi
 
+    - name: Debug Dockerfile
+      shell: bash
+      run: |
+        echo "Content of Dockerfile being used:"
+        cat ./${{ inputs.project-path }}/${{ inputs.docker-file }}
+
     - name: Build and run target 🐙
       uses: docker/build-push-action@v3
       with:
