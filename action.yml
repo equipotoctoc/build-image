@@ -152,6 +152,7 @@ runs:
         echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
         echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${IMAGE_TAG}${{ inputs.image-env }}" >> $GITHUB_OUTPUT
         echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${IMAGE_TAG}${TAG}" >> $GITHUB_OUTPUT
+        echo "IMAGE_ENV_ONLY=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx 🐳
       id: buildx
@@ -235,6 +236,7 @@ runs:
         tags: |
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT }}
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}
+          ${{ steps.prepare-tag.outputs.IMAGE_ENV_ONLY }}
         secret-files: |
           env=${{ steps.set-env.outputs.ENV_FILE_PATH }}
         build-args: |
