@@ -90,6 +90,14 @@ inputs:
     required: false
     default: 'main'
     type: string
+  aws-namespace:
+    description: 'AWS ECR namespace'
+    required: false
+    type: string
+  platforms:
+    description: 'Platforms to build for (e.g., linux/amd64,linux/arm64)'
+    required: false
+    type: string
 
 runs:
   using: 'composite'
@@ -101,6 +109,7 @@ runs:
           ${{ inputs.build-context == 'test' && github.head_ref || 
               (inputs.build-context == 'production' && inputs.VERSION != '' && inputs.VERSION != null) && inputs.VERSION || 
               inputs.branch }}
+        fetch-depth: 0
 
     # - name: Checkout 🛎️
     #   uses: actions/checkout@master
@@ -129,7 +138,11 @@ runs:
       shell: bash
       run: |
         TAG=$(echo $GITHUB_SHA)
-        CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
+        if [ -n "${{ inputs.aws-namespace }}" ]; then
+          CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.aws-namespace }}/${{ inputs.project-name }}"
+        else
+          CONTAINER_REPOSITORY="${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-default-region }}.amazonaws.com/${{ inputs.project-name }}"
+        fi
         if [ -n "${{ inputs.VERSION }}" ]; then
           IMAGE_TAG="${{ inputs.VERSION }}_"
         else
@@ -139,6 +152,7 @@ runs:
         echo "CONTAINER_REPOSITORY=${CONTAINER_REPOSITORY}" >> $GITHUB_OUTPUT
         echo "IMAGE_CURRENT=${CONTAINER_REPOSITORY}:${IMAGE_TAG}${{ inputs.image-env }}" >> $GITHUB_OUTPUT
         echo "IMAGE_CURRENT_COMMIT=${CONTAINER_REPOSITORY}:${IMAGE_TAG}${TAG}" >> $GITHUB_OUTPUT
+        echo "IMAGE_ENV_ONLY=${CONTAINER_REPOSITORY}:${{ inputs.image-env }}" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx 🐳
       id: buildx
@@ -147,7 +161,7 @@ runs:
     - name: Set env file 🎓
       id: set-env
       shell: bash
-      if: ${{ inputs.env-file != '' }}
+      if: ${{ inputs.env-file != '' && inputs.ENVIROMENT != '' }}
       run: |
         ENV_PATH=''
         if [ "${{ inputs.workspace-app }}" != '' ]; then
@@ -160,6 +174,7 @@ runs:
     - name: Get current NODE_ENV
       id: get_node_env
       shell: bash
+      if: ${{ inputs.ENVIROMENT != '' }}
       run: |
         NODE_ENV=`grep -oP 'NODE_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
         APP_ENV=`grep -oP 'APP_ENV=\K\w+' ${{ steps.set-env.outputs.ENV_FILE_PATH }}`
@@ -190,6 +205,19 @@ runs:
     #   run: |
     #     sed -i "s|http://localhost:[0-9]*|https://${{ inputs.domain }}|g" ./apps/${{ inputs.workspace-app }}/public/index.html
 
+    - name: Check Dockerfile location 🔍
+      shell: bash
+      run: |
+        echo "Checking contents of project path: ./${{ inputs.project-path }}"
+        ls -la ./${{ inputs.project-path }}
+        echo "Looking for Dockerfile at: ./${{ inputs.project-path }}/${{ inputs.docker-file }}"
+        if [ -f "./${{ inputs.project-path }}/${{ inputs.docker-file }}" ]; then
+          echo "✅ Dockerfile found"
+        else
+          echo "❌ Dockerfile not found"
+          exit 1
+        fi
+
     - name: Build and run target 🐙
       uses: docker/build-push-action@v3
       with:
@@ -198,11 +226,17 @@ runs:
         builder: ${{ steps.buildx.outputs.name }}
         file: ./${{ inputs.project-path }}/${{ inputs.docker-file }}
         target: ${{ inputs.image-target }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: |
+          type=gha,scope=${{ inputs.project-name }}-deps
+          type=gha,scope=${{ inputs.project-name }}-build
+        cache-to: |
+          type=gha,mode=max,scope=${{ inputs.project-name }}-deps
+          type=gha,mode=max,scope=${{ inputs.project-name }}-build
+        platforms: ${{ inputs.platforms != '' && inputs.platforms || 'linux/amd64' }}
         tags: |
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT }}
           ${{ steps.prepare-tag.outputs.IMAGE_CURRENT_COMMIT }}
+          ${{ steps.prepare-tag.outputs.IMAGE_ENV_ONLY }}
         secret-files: |
           env=${{ steps.set-env.outputs.ENV_FILE_PATH }}
         build-args: |
